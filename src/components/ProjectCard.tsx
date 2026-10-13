@@ -13,7 +13,7 @@ type Props = {
 export default function ProjectCard({ project, featured, onSelect }: Props) {
   const content = (
     <>
-      <ProjectPreview kind={project.preview} />
+      <ProjectPreview kind={project.preview} image={project.cover} />
       <p className="text-xs text-muted">
         {project.number} / {project.category}
       </p>

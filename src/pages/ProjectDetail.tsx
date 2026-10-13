@@ -1,52 +1,39 @@
 import { useState } from "react";
-import { previewLabels, slideKinds, type Project } from "../data/projects";
+import { previewLabels, slideKinds, type Project, type ProjectImage } from "../data/projects";
 import SlideVisual from "../components/SlideVisual";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function Slideshow() {
+function GalleryImage({ image }: { image: ProjectImage }) {
+  return <figure className="flex flex-col gap-3">
+    <img src={image.src} alt={image.alt} className="max-h-[520px] w-full rounded-xl bg-white object-contain" />
+    <figcaption className="text-sm text-muted">{image.caption}</figcaption>
+  </figure>;
+}
+
+function Slideshow({ images }: { images?: ProjectImage[] }) {
   const [active, setActive] = useState(0);
-  const count = slideKinds.length;
+  const hasImages = Boolean(images?.length);
+  const count = hasImages ? images!.length : slideKinds.length;
   const go = (step: number) => setActive((i) => (i + step + count) % count);
-
   return (
-    <div className="flex flex-col gap-5 rounded-[20px] bg-surface px-4 py-5">
-      <div className="text-base" aria-live="polite">
-        <SlideVisual kind={slideKinds[active]} />
+    <div className="flex flex-col gap-5 rounded-[20px] bg-surface px-4 py-5" role="region" aria-label="Project gallery">
+      <div aria-live="polite">
+        {hasImages ? <GalleryImage image={images![active]} /> : <SlideVisual kind={slideKinds[active]} />}
       </div>
-
-      <div className="flex justify-between rounded-[30px] bg-paper px-4 py-3 text-sm leading-normal whitespace-nowrap">
-        <button type="button" onClick={() => go(-1)} className="cursor-pointer hover:opacity-60">
-          ← Previous
-        </button>
-        <p>
-          {pad(active + 1)} / {pad(count)}
-        </p>
-        <button type="button" onClick={() => go(1)} className="cursor-pointer hover:opacity-60">
-          Next →
-        </button>
+      <div className="flex justify-between gap-2 rounded-[30px] bg-paper px-4 py-3 text-sm">
+        <button type="button" onClick={() => go(-1)} className="cursor-pointer hover:opacity-60">← Previous</button>
+        <p>{pad(active + 1)} / {pad(count)}</p>
+        <button type="button" onClick={() => go(1)} className="cursor-pointer hover:opacity-60">Next →</button>
       </div>
-
-      <p className="text-sm leading-normal">Choose a slide</p>
-
-      <div className="flex items-start gap-3">
-        {slideKinds.map((kind, i) => (
-          <button
-            key={kind}
-            type="button"
-            onClick={() => setActive(i)}
-            aria-pressed={i === active}
-            className={`flex min-w-0 flex-1 cursor-pointer flex-col items-start gap-2 overflow-hidden rounded-[10px] border-2 text-left ${
-              i === active ? "border-ink" : "border-transparent hover:border-ink/40"
-            }`}
-          >
-            {/* 1em ≈ 0.28–0.33 × the full slide, matching the Figma thumbnails */}
-            <div className="w-full text-[4.46px] md:text-[5.1px]" aria-hidden="true">
-              <SlideVisual kind={kind} />
-            </div>
-            <span className="text-sm leading-normal whitespace-nowrap">
-              {pad(i + 1)} {previewLabels[kind]}
-            </span>
+      <p className="text-sm">Choose a slide</p>
+      <div className="grid grid-cols-3 gap-3">
+        {Array.from({ length: count }, (_, i) => (
+          <button key={i} type="button" onClick={() => setActive(i)} aria-pressed={i === active}
+            aria-label={`Show slide ${i + 1}: ${hasImages ? images![i].alt : previewLabels[slideKinds[i]]}`}
+            className={`min-w-0 cursor-pointer overflow-hidden rounded-lg border-2 p-1 text-left ${i === active ? "border-ink" : "border-transparent hover:border-ink/40"}`}>
+            {hasImages ? <img src={images![i].src} alt="" className="aspect-[4/3] w-full rounded bg-white object-contain" /> : <div className="text-[4px]"><SlideVisual kind={slideKinds[i]} /></div>}
+            <span className="text-xs">{pad(i + 1)} {hasImages ? "Result" : previewLabels[slideKinds[i]]}</span>
           </button>
         ))}
       </div>
@@ -85,7 +72,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
         ))}
       </dl>
 
-      <SlideVisual kind={project.preview} />
+      {project.cover ? <GalleryImage image={project.cover} /> : <SlideVisual kind={project.preview} />}
 
       <section className="flex flex-col gap-4">
         <h2 className="text-[28px] font-medium md:text-4xl">The project</h2>
@@ -106,8 +93,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
       </div>
 
       <h2 className="text-[28px] font-medium md:text-4xl">Project gallery</h2>
-      <p className="text-base">Show the work, then explain what the viewer should notice.</p>
-      <Slideshow />
+      <Slideshow key={project.slug} images={project.gallery} />
 
       <h2 className="text-[28px] font-medium md:text-4xl">Outcome &amp; reflection</h2>
       <p className="text-[17px]">{detail.outcome}</p>
@@ -115,11 +101,12 @@ export default function ProjectDetail({ project }: { project: Project }) {
       <section className="flex flex-col gap-4 bg-accent p-6">
         <h2 className="text-2xl font-medium">Explore the project files</h2>
         <div className="flex flex-wrap gap-x-[1.25em] text-sm md:text-lg">
-          {detail.resources.map(({ label, href }) =>
+          {detail.resources.map(({ label, href, download }) =>
             href ? (
               <a
                 key={label}
                 href={href}
+                download={download || undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:opacity-70"
@@ -131,9 +118,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
             ),
           )}
         </div>
-        <p className="text-xs">
-          Sample resource labels — connect only the links relevant to this project.
-        </p>
+
       </section>
 
       <a href="#work" className="w-fit text-base hover:opacity-60">

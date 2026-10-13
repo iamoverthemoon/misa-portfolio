@@ -1,4 +1,4 @@
-import type { PreviewKind } from "../data/projects";
+import type { PreviewKind, ProjectImage } from "../data/projects";
 import graphAxes from "../assets/previews/graph-axes.svg";
 import graphLine from "../assets/previews/graph-line.svg";
 import websiteFrame from "../assets/previews/website-frame.svg";
@@ -35,7 +35,8 @@ const layers: Record<PreviewKind, Layer[]> = {
   ],
 };
 
-export default function ProjectPreview({ kind }: { kind: PreviewKind }) {
+export default function ProjectPreview({ kind, image }: { kind: PreviewKind; image?: ProjectImage }) {
+  if (image) return <img src={image.src} alt={image.alt} className="h-[180px] w-full rounded-[10px] bg-paper object-contain" />;
   return (
     <div className="flex w-full flex-col gap-2 overflow-hidden rounded-[10px] bg-paper px-2 py-3">
       <div className="relative h-[140px] w-full overflow-hidden" aria-hidden="true">

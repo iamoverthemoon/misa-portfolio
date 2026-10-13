@@ -60,7 +60,7 @@ function SelectedWork() {
       </h2>
 
       <div className="flex items-start gap-6" aria-live="polite">
-        {ordered.map((project) => (
+        {ordered.slice(0, 3).map((project) => (
           <ProjectCard
             key={project.slug}
             project={project}
